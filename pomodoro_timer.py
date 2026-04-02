@@ -70,8 +70,9 @@ class PomodoroTimer:
 
     def start(self) -> bool:
         """Start the timer. Returns True if started successfully."""
+        # If running, stop it first
         if self.is_running:
-            return False
+            self.stop()
 
         self.is_running = True
         self.is_paused = False
@@ -92,6 +93,9 @@ class PomodoroTimer:
         """Resume the timer from paused state. Returns True if resumed."""
         if not self.is_running or not self.is_paused:
             return False
+
+        # Stop any existing thread before creating new one
+        self.stop()
 
         self.is_paused = False
         self._stop_event.clear()
@@ -187,6 +191,9 @@ class PomodoroTimer:
 
         # Auto-start next mode if enabled
         if self.settings and self.settings.auto_start_enabled:
+            # Stop any existing thread before creating new one
+            self.stop()
+
             self.is_running = True
             self._stop_event.clear()
             self._timer_thread = threading.Thread(target=self._run_timer, daemon=True)
@@ -197,28 +204,24 @@ class PomodoroTimer:
         if self.settings and not self.settings.sound_enabled:
             return
 
-        # Platform-specific sound
-        import sys
-        if sys.platform == "darwin":
-            # macOS beep using applescript
-            import subprocess
-            try:
-                subprocess.run(["osascript", "-e", "beep"], capture_output=True)
-            except Exception:
-                pass
-        elif sys.platform == "win32":
-            # Windows beep
-            import winsound
-            winsound.Beep(1000, 500)
-        else:
-            # Linux/Unix - try aplay or paplay
-            import subprocess
-            import os
-            sound_file = os.path.join(os.path.dirname(__file__), "notification.wav")
-            if os.path.exists(sound_file):
+        # Import notification module
+        try:
+            from notification import NotificationSound, play_completion_sound
+            play_completion_sound()
+        except ImportError:
+            # Fallback to platform-specific sound if notification module fails
+            import sys
+            if sys.platform == "darwin":
+                # macOS beep using applescript
+                import subprocess
                 try:
-                    subprocess.run(["aplay", sound_file], capture_output=True)
+                    subprocess.run(["osascript", "-e", "beep"], capture_output=True)
                 except Exception:
-                    print("\a", end="")  # Fallback bell
+                    pass
+            elif sys.platform == "win32":
+                # Windows beep
+                import winsound
+                winsound.Beep(1000, 500)
             else:
-                print("\a", end="")  # Simple bell
+                # Linux/Unix - simple bell
+                print("\a", end="")

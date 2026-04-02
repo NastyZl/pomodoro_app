@@ -17,6 +17,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pomodoro_timer import PomodoroTimer
 from gui import PomodoroGUI
 from settings import Settings
+from notification import NotificationSound
+
+# Global sound instance for pause/sound management
+sound_notifier = NotificationSound()
 
 
 def main():
