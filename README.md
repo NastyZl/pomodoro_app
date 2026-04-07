@@ -1,7 +1,7 @@
 # Pomodoro Timer
 
 Desktop Pomodoro timer application built with Python and Tkinter.
-
+![img.png](img.png)
 ## Features
 
 - **Work mode** (default 25 minutes)
